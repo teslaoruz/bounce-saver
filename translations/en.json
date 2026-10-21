@@ -6,11 +6,7 @@
     },
     "logo": {
       "label": "Logo",
-      "description": "One image that always bounces. White art on a transparent background tints best. Leave empty to pick a random logo each time."
-    },
-    "logo_folder": {
-      "label": "Logo folder",
-      "description": "Folder of .svg, .png or .webp images; a random one bounces each time. Used when Logo is empty. Leave empty for the built-in logos."
+      "description": "Image that bounces. White art on a transparent background tints best. Leave empty for the built-in logo."
     }
   }
 }

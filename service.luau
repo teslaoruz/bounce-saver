@@ -13,11 +13,7 @@ end
 local function start()
   lastStart = noctalia.nowMs()
   local cmd = "BOUNCE_TIMEOUT=" .. tostring(noctalia.getConfig("timeout"))
-  -- A single logo wins; else a folder to pick from; else shell.qml uses its bundled logos/.
   local logo = noctalia.getConfig("logo")
-  if logo == nil or logo == "" then
-    logo = noctalia.getConfig("logo_folder")
-  end
   if logo ~= nil and logo ~= "" then
     cmd ..= " BOUNCE_LOGO=" .. quote(noctalia.expandPath(logo))
   end

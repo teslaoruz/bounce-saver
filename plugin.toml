@@ -5,7 +5,7 @@ plugin_api = 34
 author = "teslaoruz"
 license = "MIT"
 icon = "device-desktop"
-description = "OLED-safe screensaver: a random logo bouncing on pure black, new colour per hit, a burst on corners."
+description = "OLED-safe screensaver: a logo bouncing on pure black, new colour per hit, a burst on corner hits."
 tags = ["service", "animation", "fun", "utility", "niri"]
 # The overlay is drawn by Quickshell (qs); niri is optional, used to spot fullscreen video.
 dependencies = ["quickshell"]
@@ -26,13 +26,6 @@ label_key = "settings.logo.label"
 description_key = "settings.logo.description"
 default = ""
 extensions = [".svg", ".png", ".webp"]
-
-[[setting]]
-key = "logo_folder"
-type = "folder"
-label_key = "settings.logo_folder.label"
-description_key = "settings.logo_folder.description"
-default = ""
 
 # Keeps the screensaver process running while the plugin is enabled.
 [[service]]

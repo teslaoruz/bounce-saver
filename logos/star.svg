@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- bounce-saver logo: five-point star. White so it can be tinted; viewBox hugs the art. -->
-<svg xmlns="http://www.w3.org/2000/svg" width="112" height="104" viewBox="44 4.5 112 104">
-  <path fill="#fff" stroke="#fff" stroke-width="3" stroke-linejoin="round"
-        d="M100 6L113.52 43.39L153.26 44.7L121.87 69.11L132.92 107.3L100 85L67.08 107.3L78.13 69.11L46.74 44.7L86.48 43.39Z"/>
-</svg>

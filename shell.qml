@@ -2,12 +2,11 @@
 // Own idle timer, so it runs with Noctalia caffeine on; Noctalia still does
 // lock / screen-off. Run: qs -p /path/to/bounce-saver/shell.qml
 // (the Noctalia plugin's service.luau does this for you).
-// BOUNCE_LOGO=/abs/path: one image, or a folder to pick a random image from on every start
-// (default: the bundled logos/; white art tints best). BOUNCE_TIMEOUT=<seconds> the idle
-// time (default 120). BOUNCE_DEMO_CORNER=1 aims the first run into a corner, for testing.
+// BOUNCE_LOGO=/abs/path.svg picks another logo (white art tints best),
+// BOUNCE_TIMEOUT=<seconds> the idle time (default 120).
+// BOUNCE_DEMO_CORNER=1 aims the first run into a corner, for testing.
 import QtQuick
 import QtQuick.Effects
-import Qt.labs.folderlistmodel
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
@@ -64,22 +63,7 @@ ShellRoot {
         onTriggered: fsProbe.running = true
     }
 
-    readonly property string logoEnv: Quickshell.env("BOUNCE_LOGO") || ""
     property bool demoCorner: Quickshell.env("BOUNCE_DEMO_CORNER") === "1"
-
-    // Lists the logo folder; stays empty when BOUNCE_LOGO names a single file.
-    FolderListModel {
-        id: logoFolder
-        folder: root.logoEnv === "" ? Qt.resolvedUrl("logos") : "file://" + root.logoEnv
-        nameFilters: ["*.svg", "*.png", "*.webp"]
-        showDirs: false
-    }
-
-    function randomLogo() {
-        if (logoFolder.count === 0)
-            return root.logoEnv !== "" ? "file://" + root.logoEnv : Qt.resolvedUrl("logos/moon.svg")
-        return logoFolder.get(Math.floor(Math.random() * logoFolder.count), "fileUrl")
-    }
 
     // One corner-hit spark: flies from the corner into the screen and fades out.
     Component {
@@ -141,31 +125,22 @@ ShellRoot {
             WlrLayershell.namespace: "bounce-saver"
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
 
-            // Re-rolled on every start: logo, angle, speed, size, colour mode, trail.
-            // Motion is always the old DVD-player physics: constant speed, mirror bounces.
+            // DVD-player physics: constant speed, mirror bounces, new colour per wall hit.
+            // Each start picks a random position and a random angle (25° to 65° off the walls).
+            readonly property real speed: 210 // px per second, along the direction of travel
             property real hue: Math.random()
-            property real vx: 150 // px per second
+            property real vx: 150
             property real vy: 150
-            property real sizeDiv: 6 // logo width = screen width / sizeDiv
-            property bool rainbow: false // hue drifts all the time instead of changing per hit
-            property bool trail: false
-            property var history: [] // recent positions, newest first, for the trail
             property real lastHitX: -1e9 // ms timestamps of the last wall hits, for corner detection
             property real lastHitY: -1e9
 
             function restart() {
-                logo.source = root.randomLogo()
-                const angle = (Math.random() < 0.3 ? 45 : 25 + Math.random() * 40) * Math.PI / 180
-                const speed = 110 + Math.random() * 100
-                win.vx = speed * Math.cos(angle) * (Math.random() < 0.5 ? -1 : 1)
-                win.vy = speed * Math.sin(angle) * (Math.random() < 0.5 ? -1 : 1)
-                win.sizeDiv = 5 + Math.random() * 2.5
-                win.rainbow = Math.random() < 0.3
-                win.trail = Math.random() < 0.3
+                const angle = (25 + Math.random() * 40) * Math.PI / 180
+                win.vx = win.speed * Math.cos(angle) * (Math.random() < 0.5 ? -1 : 1)
+                win.vy = win.speed * Math.sin(angle) * (Math.random() < 0.5 ? -1 : 1)
                 win.hue = Math.random()
-                win.history = []
-                shown.x = Math.random() * Math.max(win.width - win.width / win.sizeDiv, 0)
-                shown.y = Math.random() * Math.max(win.height - win.height / 3, 0)
+                shown.x = Math.random() * Math.max(win.width - shown.width, 0)
+                shown.y = Math.random() * Math.max(win.height - shown.height, 0)
                 if (root.demoCorner) {
                     root.demoCorner = false
                     shown.x = 40; shown.y = 40; win.vx = -150; win.vy = -150
@@ -176,26 +151,9 @@ ShellRoot {
 
             Image {
                 id: logo
-                sourceSize.width: Math.round(win.modelData.width / win.sizeDiv) // height follows the art
+                source: Quickshell.env("BOUNCE_LOGO") ? "file://" + Quickshell.env("BOUNCE_LOGO") : "logo.svg"
+                sourceSize.width: Math.round(win.modelData.width / 6) // height follows the art's aspect
                 visible: false
-            }
-
-            // Trail: fading copies at older positions.
-            Repeater {
-                model: win.trail ? 5 : 0
-                MultiEffect {
-                    required property int index
-                    readonly property var pos: win.history[(index + 1) * 12]
-                    source: logo
-                    width: logo.width
-                    height: logo.height
-                    visible: pos !== undefined
-                    x: pos ? pos.x : 0
-                    y: pos ? pos.y : 0
-                    opacity: 0.45 * (1 - index / 5)
-                    colorization: 1.0
-                    colorizationColor: Qt.hsva(win.hue, 1, 1, 1)
-                }
             }
 
             MultiEffect {
@@ -205,6 +163,31 @@ ShellRoot {
                 height: logo.height
                 colorization: 1.0
                 colorizationColor: Qt.hsva(win.hue, 1, 1, 1)
+                // Wall hit: squash against the wall (pinned at the contact edge), spring back.
+                transform: Scale { id: squash }
+            }
+
+            ParallelAnimation {
+                id: squashX
+                NumberAnimation { target: squash; property: "xScale"; from: 0.8; to: 1; duration: 280; easing.type: Easing.OutBack }
+                NumberAnimation { target: squash; property: "yScale"; from: 1.1; to: 1; duration: 280; easing.type: Easing.OutBack }
+            }
+            ParallelAnimation {
+                id: squashY
+                NumberAnimation { target: squash; property: "yScale"; from: 0.8; to: 1; duration: 280; easing.type: Easing.OutBack }
+                NumberAnimation { target: squash; property: "xScale"; from: 1.1; to: 1; duration: 280; easing.type: Easing.OutBack }
+            }
+
+            function squashOn(axisX, atStart) {
+                if (axisX) {
+                    squash.origin.x = atStart ? 0 : shown.width
+                    squash.origin.y = shown.height / 2
+                    squashX.restart()
+                } else {
+                    squash.origin.x = shown.width / 2
+                    squash.origin.y = atStart ? 0 : shown.height
+                    squashY.restart()
+                }
             }
 
             Item { id: fx; anchors.fill: parent } // corner sparks and rings live here, above the logo
@@ -217,7 +200,7 @@ ShellRoot {
 
             // New hue at least 1/6 turn away, so every hit is a visible change.
             function bounce() {
-                if (!win.rainbow) win.hue = (win.hue + 1 / 6 + Math.random() * 2 / 3) % 1
+                win.hue = (win.hue + 1 / 6 + Math.random() * 2 / 3) % 1
             }
 
             // Both walls within 150 ms counts as a corner: sparks, a ring and a pop.
@@ -244,21 +227,21 @@ ShellRoot {
                     // Mirror reflection: overshoot past a wall is folded back, no energy lost.
                     if (x < 0 || x > maxX) {
                         const cx = x < 0 ? 0 : win.width
+                        win.squashOn(true, x < 0)
                         win.vx = -win.vx; x = Math.min(Math.max(x < 0 ? -x : 2 * maxX - x, 0), maxX); hit = true
                         if (now - win.lastHitY < 150) win.corner(cx, win.vy > 0 ? 0 : win.height)
                         win.lastHitX = now
                     }
                     if (y < 0 || y > maxY) {
                         const cy = y < 0 ? 0 : win.height
+                        win.squashOn(false, y < 0)
                         win.vy = -win.vy; y = Math.min(Math.max(y < 0 ? -y : 2 * maxY - y, 0), maxY); hit = true
                         if (now - win.lastHitX < 150) win.corner(win.vx > 0 ? 0 : win.width, cy)
                         win.lastHitY = now
                     }
                     if (hit) win.bounce()
-                    if (win.rainbow) win.hue = (win.hue + dt * 0.06) % 1
                     shown.x = x
                     shown.y = y
-                    if (win.trail) win.history = [{ x: x, y: y }].concat(win.history.slice(0, 64))
                 }
             }
         }
