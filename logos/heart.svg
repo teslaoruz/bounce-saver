@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- bounce-saver logo: heart. White so it can be tinted; viewBox hugs the art. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="104" viewBox="36 10 128 104">
+  <path fill="#fff" d="M100 112C58 84 38 64 38 42C38 23 52 12 68 12C82 12 93 20 100 32C107 20 118 12 132 12C148 12 162 23 162 42C162 64 142 84 100 112Z"/>
+</svg>

@@ -26,9 +26,12 @@ static page (see Notes).
 Enable **Bounce Saver** in Settings → Plugins. There is nothing to place on the bar: the
 `saver` service runs in the background while the plugin is enabled.
 
-- After the idle time, every output turns black and the logo starts bouncing.
-- It moves on a 45° diagonal at constant speed, reflects off every edge like a mirror,
-  and takes a new colour on each hit.
+- After the idle time, every output turns black and a logo starts bouncing.
+- Each start rolls a new look, per screen: a random logo (moon, star, heart or cat, or
+  your own), angle (often the classic 45°), speed and size, a new colour on every hit or a
+  slow rainbow, and sometimes a fading trail.
+- The motion is always the old DVD-player physics: constant speed, mirror bounces.
+- Hitting a corner exactly sets off a burst of rainbow sparks, a ring and a little pop.
 - Any key press or mouse movement hides it.
 
 It keeps its own idle timer, so it also runs while Noctalia's caffeine is on. Your own
@@ -40,7 +43,8 @@ those as before.
 | Setting | Type | Default | Description |
 | --- | --- | --- | --- |
 | `timeout` | `int` | `120` | Seconds without keyboard or mouse input before the screensaver starts (10 to 3600). |
-| `logo` | `file` | empty | Image that bounces: `.svg`, `.png` or `.webp`. White art on a transparent background tints best, because the logo is recoloured on every hit. Empty uses the built-in crescent moon. |
+| `logo` | `file` | empty | One image that always bounces: `.svg`, `.png` or `.webp`. White art on a transparent background tints best, because the logo is recoloured on every hit. |
+| `logo_folder` | `folder` | empty | Folder of images to pick a random one from on every start. Used when `logo` is empty; when both are empty, a random built-in logo is used. |
 
 ## Notes
 
@@ -62,8 +66,10 @@ those as before.
 `shell.qml` also runs on its own, configured with environment variables:
 
 ```sh
-BOUNCE_TIMEOUT=120 BOUNCE_LOGO=/path/to/logo.svg qs -p /path/to/bounce-saver/shell.qml
+BOUNCE_TIMEOUT=120 BOUNCE_LOGO=/path/to/logo-or-folder qs -p /path/to/bounce-saver/shell.qml
 ```
+
+`BOUNCE_DEMO_CORNER=1` aims the first run straight into a corner, to see the corner effect.
 
 niri autostart:
 
