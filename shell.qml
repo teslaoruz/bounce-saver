@@ -139,8 +139,9 @@ ShellRoot {
                 win.vx = win.speed * Math.cos(angle) * (Math.random() < 0.5 ? -1 : 1)
                 win.vy = win.speed * Math.sin(angle) * (Math.random() < 0.5 ? -1 : 1)
                 win.hue = Math.random()
-                shown.x = Math.random() * Math.max(win.width - shown.width, 0)
-                shown.y = Math.random() * Math.max(win.height - shown.height, 0)
+                // Screen size, not win.width: the layer surface is still 0×0 when visible flips, which pinned every start to the top-left.
+                shown.x = Math.random() * Math.max(win.modelData.width - shown.width, 0)
+                shown.y = Math.random() * Math.max(win.modelData.height - shown.height, 0)
                 if (root.demoCorner) {
                     root.demoCorner = false
                     shown.x = 40; shown.y = 40; win.vx = -150; win.vy = -150

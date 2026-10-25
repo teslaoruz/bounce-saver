@@ -1,6 +1,6 @@
 id = "teslaoruz/bounce-saver"
 name = "Bounce Saver"
-version = "1.1.0"
+version = "1.1.1"
 plugin_api = 34
 author = "teslaoruz"
 license = "MIT"
